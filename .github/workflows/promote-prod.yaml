@@ -1,0 +1,45 @@
+# Promote dev -> prod bằng Pull Request. Job chạy trong Environment "prod" (cần reviewer duyệt),
+# và PR đổi values-prod.yaml cũng cần được review/merge: hai lớp change-approval.
+name: promote-prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Tên service (thư mục apps/<service>)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      GH_TOKEN: ${{ secrets.GITOPS_TOKEN }}   # dùng PAT để PR được kích hoạt workflow validate
+    steps:
+      - uses: actions/checkout@v7
+        with: { token: '${{ secrets.GITOPS_TOKEN }}' }
+      - name: Copy image từ dev sang prod
+        id: bump
+        run: |
+          svc='${{ inputs.service }}'
+          dev="apps/$svc/values-dev.yaml"; prod="apps/$svc/values-prod.yaml"
+          test -f "$dev" && test -f "$prod" || { echo "::error::không thấy values của $svc"; exit 1; }
+          repo=$(yq '.image.repository' "$dev"); tag=$(yq '.image.tag' "$dev")
+          case "$tag" in sha-*) ;; *) echo "::error::tag dev '$tag' không phải sha-xxxxxxx, không promote"; exit 1;; esac
+          yq -i ".image.repository = \"$repo\" | .image.tag = \"$tag\"" "$prod"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Mở Pull Request
+        run: |
+          if git diff --quiet; then echo "prod đã dùng tag này"; exit 0; fi
+          br="promote/${{ inputs.service }}-${{ steps.bump.outputs.tag }}"
+          git config user.name ci-bot; git config user.email ci-bot@users.noreply.github.com
+          git checkout -b "$br"
+          git commit -am "chore(${{ inputs.service }}): promote ${{ steps.bump.outputs.tag }} to prod"
+          git push -u origin "$br"
+          gh pr create --base main --head "$br" \
+            --title "promote ${{ inputs.service }} ${{ steps.bump.outputs.tag }} to prod" \
+            --body "Promote từ dev. Sau khi merge: ArgoCD hiển thị OutOfSync cho ${{ inputs.service }}-prod, sync tay để triển khai."

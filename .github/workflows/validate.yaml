@@ -1,0 +1,37 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v4
+      - name: helm lint + render mọi app x env
+        run: |
+          helm lint charts/backend-service -f apps/order-service/values-dev.yaml
+          for d in apps/*/; do
+            app=$(basename "$d")
+            for env in dev prod; do
+              echo "== $app-$env"
+              helm template "$app-$env" charts/backend-service -f "apps/$app/values-$env.yaml" > /dev/null
+            done
+          done
+      - name: yaml hợp lệ (bootstrap, platform, applicationsets)
+        run: |
+          pip install -q pyyaml
+          python - <<'PY'
+          import glob, yaml
+          for f in glob.glob('bootstrap/*.yaml')+glob.glob('platform/*.yaml')+glob.glob('platform-config/*.yaml')+glob.glob('applicationsets/*.yaml')+glob.glob('optional/*.yaml'):
+              list(yaml.safe_load_all(open(f)))
+              print('ok', f)
+          PY
+      - name: Không có image tag "latest" trong values
+        run: "! grep -rEn 'tag: *(latest|\"latest\")' apps/"
