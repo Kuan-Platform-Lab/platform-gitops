@@ -1,0 +1,17 @@
+# Pod trong k3s không resolve được tên container "floci" (DNS nhúng của Docker), nên khai báo Service trỏ thẳng IP.
+# IP này là IP của container floci trong mạng compose (docker inspect platform-lab-floci-1); sửa nếu mạng bị tạo lại.
+apiVersion: v1
+kind: Service
+metadata: { name: floci, namespace: external-secrets }
+spec:
+  ports: [{ name: api, port: 4566, targetPort: 4566 }]
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: floci
+  namespace: external-secrets
+  labels: { kubernetes.io/service-name: floci }
+addressType: IPv4
+ports: [{ name: api, port: 4566, protocol: TCP }]
+endpoints: [{ addresses: ["192.168.96.2"] }]
