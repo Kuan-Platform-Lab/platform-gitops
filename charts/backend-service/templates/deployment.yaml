@@ -21,6 +21,9 @@ spec:
       {{- end }}
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001      # uid số: kubelet không xác minh được user dạng tên
+        runAsGroup: 10001
+        fsGroup: 10001
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: app
