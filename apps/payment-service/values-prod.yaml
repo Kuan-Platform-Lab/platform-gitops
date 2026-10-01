@@ -1,5 +1,5 @@
 image:
   repository: payment-service
-  tag: local
+  tag: latest
 port: 8082
 managementPort: 8083
