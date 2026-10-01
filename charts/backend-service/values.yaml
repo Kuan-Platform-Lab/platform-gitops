@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: ""        # CI ghi đè (Phase 3)
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []    # vd. [{ name: ghcr-pull }]
+
+port: 8080
+managementPort: 8081
+probes:
+  liveness: /actuator/health/liveness
+  readiness: /actuator/health/readiness
+
+env: {}                 # biến môi trường thường
+envFromSecrets: []      # tên các Secret nạp vào env
+
+# Secret lấy từ Secrets Manager qua External Secrets Operator
+externalSecret:
+  enabled: false
+  store: floci-secretsmanager
+  key: ""               # vd. platform-dev/rds/orders
+  template: {}          # tên biến env -> template Go, vd. DB_URL: "jdbc:postgresql://{{ .host }}:{{ .port }}/{{ .dbname }}"
+
+ingress:
+  enabled: false
+  className: nginx
+  host: ""
+
+resources:
+  requests: { cpu: 50m, memory: 256Mi }
+  limits: { memory: 512Mi }
+
+podAnnotations:
+  prometheus.io/scrape: "true"

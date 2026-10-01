@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bs.name" . }}
+  labels: {{- include "bs.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Release.Name }}
+  template:
+    metadata:
+      labels: {{- include "bs.labels" . | nindent 8 }}
+      annotations:
+        prometheus.io/port: {{ .Values.managementPort | quote }}
+        prometheus.io/path: /actuator/prometheus
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: app
+          image: "{{ required "image.repository is required" .Values.image.repository }}:{{ required "image.tag is required" .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - { name: http, containerPort: {{ .Values.port }} }
+            - { name: management, containerPort: {{ .Values.managementPort }} }
+          {{- with .Values.env }}
+          env:
+            {{- range $k, $v := . }}
+            - { name: {{ $k }}, value: {{ $v | quote }} }
+            {{- end }}
+          {{- end }}
+          envFrom:
+            {{- if .Values.externalSecret.enabled }}
+            - secretRef: { name: {{ include "bs.name" . }}-secrets }
+            {{- end }}
+            {{- range .Values.envFromSecrets }}
+            - secretRef: { name: {{ . }} }
+            {{- end }}
+          livenessProbe:
+            httpGet: { path: {{ .Values.probes.liveness }}, port: management }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: {{ .Values.probes.readiness }}, port: management }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: {} }

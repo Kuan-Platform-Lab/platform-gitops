@@ -1,0 +1,9 @@
+# Cài ArgoCD một lần bằng tay: helm upgrade --install argocd argo/argo-cd -n argocd --create-namespace -f bootstrap/argocd-values.yaml
+# Sau đó ArgoCD tự quản lý chính nó và mọi thứ còn lại qua root-app.
+configs:
+  params:
+    server.insecure: true     # TLS kết thúc ở Cloudflare Tunnel / ingress, không phải ở argocd-server
+dex:
+  enabled: false
+notifications:
+  enabled: false

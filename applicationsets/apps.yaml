@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata: { name: backend-apps, namespace: argocd }
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/Kuan-Platform-Lab/platform-gitops
+              revision: main
+              directories: [{ path: apps/* }]
+          - list:
+              elements: [{ env: dev }, { env: prod }]
+  template:
+    metadata: { name: '{{.path.basename}}-{{.env}}' }
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Kuan-Platform-Lab/platform-gitops
+        targetRevision: main
+        path: charts/backend-service
+        helm:
+          releaseName: '{{.path.basename}}-{{.env}}'
+          valueFiles: ['../../apps/{{.path.basename}}/values-{{.env}}.yaml']
+      destination: { server: https://kubernetes.default.svc, namespace: '{{.env}}' }
+      syncPolicy:
+        syncOptions: [CreateNamespace=true]
+  # dev: auto-sync + self-heal + prune; prod: sync tay (change approval)
+  templatePatch: |
+    {{- if eq .env "dev" }}
+    spec:
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+    {{- end }}

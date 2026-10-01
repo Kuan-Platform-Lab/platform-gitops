@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bs.name" . }}
+  labels: {{- include "bs.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ .Release.Name }}
+  ports:
+    - { name: http, port: {{ .Values.port }}, targetPort: http }
+    - { name: management, port: {{ .Values.managementPort }}, targetPort: management }

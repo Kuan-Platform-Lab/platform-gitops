@@ -1,0 +1,12 @@
+image:
+  repository: order-service      # Phase 2: image nạp tay vào k3s. Phase 3: CI ghi ghcr.io/... + sha-xxxxxxx
+  tag: local
+env:
+  PAYMENT_URL: http://payment-service-dev:8082
+externalSecret:
+  enabled: true
+  key: platform-dev/rds/orders
+  template:
+    DB_URL: "jdbc:postgresql://{{ .host }}:{{ .port }}/{{ .dbname }}"
+    DB_USER: "{{ .username }}"
+    DB_PASSWORD: "{{ .password }}"

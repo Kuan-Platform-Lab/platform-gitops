@@ -1,0 +1,19 @@
+# App-of-apps: kubectl apply -n argocd -f bootstrap/root-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/Kuan-Platform-Lab/platform-gitops
+      targetRevision: main
+      path: platform           # add-ons (ingress, cert-manager, ESO, ...)
+    - repoURL: https://github.com/Kuan-Platform-Lab/platform-gitops
+      targetRevision: main
+      path: applicationsets    # sinh Application cho mọi app x env
+  destination: { server: https://kubernetes.default.svc, namespace: argocd }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
