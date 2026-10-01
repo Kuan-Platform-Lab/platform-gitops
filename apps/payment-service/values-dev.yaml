@@ -1,5 +1,5 @@
 image:
-  repository: payment-service
-  tag: local
+  repository: ghcr.io/kuan-platform-lab/payment-service
+  tag: sha-ee67a93
 port: 8082
 managementPort: 8083
