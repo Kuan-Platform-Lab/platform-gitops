@@ -10,3 +10,6 @@ externalSecret:
     DB_URL: "jdbc:postgresql://{{ .host }}:{{ .port }}/{{ .dbname }}"
     DB_USER: "{{ .username }}"
     DB_PASSWORD: "{{ .password }}"
+ingress:
+  enabled: true
+  host: order.dev.lab.local     # qua Cloudflare Tunnel thì đổi thành hostname thật
