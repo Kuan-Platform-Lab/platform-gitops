@@ -1,6 +1,6 @@
 image:
-  repository: order-service      # Phase 2: image nạp tay vào k3s. Phase 3: CI ghi ghcr.io/... + sha-xxxxxxx
-  tag: local
+  repository: ghcr.io/kuan-platform-lab/order-service # Phase 2: image nạp tay vào k3s. Phase 3: CI ghi ghcr.io/... + sha-xxxxxxx
+  tag: sha-1fff8e6
 env:
   PAYMENT_URL: http://payment-service-prod:8082
 externalSecret:
