@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/kuan-platform-lab/order-service
-  tag: sha-f8aaa1f
+  tag: sha-1fff8e6
 env:
   PAYMENT_URL: http://payment-service-dev:8082
 externalSecret:
@@ -12,4 +12,4 @@ externalSecret:
     DB_PASSWORD: "{{ .password }}"
 ingress:
   enabled: true
-  host: order.dev.lab.local     # qua Cloudflare Tunnel thì đổi thành hostname thật
+  host: order.dev.lab.local # qua Cloudflare Tunnel thì đổi thành hostname thật
